@@ -1,35 +1,27 @@
-name: Image Compression
+name: Merge Imgbot
 
 on:
-  push:
-    paths:
-      - '**/*.png'
-      - '**/*.jpg'
-      - '**/*.jpeg'
-      - '**/*.gif'
+  pull_request:
+    types:
+      - opened
+      - ready_for_review
+  pull_request_review:
+    types:
+      - submitted
+  status: {}
 
 jobs:
-  compress_images:
+  automerge:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y imagemagick
-
-      - name: Compress images
-        run: |
-          find . -type f \( -iname \*.png -o -iname \*.jpg -o -iname \*.jpeg -o -iname \*.gif \) -exec convert "{}" -resize 50% "{}" \;
-
-      - name: Commit and push changes
+      - name: automerge
+        uses: "pascalgn/automerge-action@v0.9.0"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config --global user.email "actions@github.com"
-          git config --global user.name "GitHub Actions"
-          git add .
-          git commit -m "Compressed images"
-          git push https://$GH_TOKEN@github.com/${{ github.repository }}.git HEAD:main
+          GITHUB_TOKEN: "${{ secrets.GIT_TOKEN }}"
+          MERGE_LABELS: ""
+          MERGE_METHOD: "squash"
+          MERGE_COMMIT_MESSAGE: "pull-request-description"
+          MERGE_FORKS: "false"
+          MERGE_RETRIES: "2"
+          MERGE_RETRY_SLEEP: "10000"
+          UPDATE_METHOD: "rebase"
