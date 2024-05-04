@@ -1,36 +1,33 @@
-name: 压缩图片
+name: Image Compression
+
 on:
   push:
-    branches:
-      - main
     paths:
-      - '**.jpg'
-      - '**.jpeg'
-      - '**.png'
-      - '**.webp'
-  workflow_dispatch:
+      - '**/*.png'
+      - '**/*.jpg'
+      - '**/*.jpeg'
+      - '**/*.gif'
+
 jobs:
-  build:
-    name: calibreapp/image-actions
+  compress_images:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repo
+      - name: Checkout repository
         uses: actions/checkout@v2
-      - name: Compress Images
-        id: calibre
-        uses: calibreapp/image-actions@main
-        with:
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          compressOnly: true
-          jpegQuality: '60'
-          jpegProgressive: false
-          pngQuality: '60'
-          webpQuality: '60'
-      - name: Create New Pull Request If Needed
-        if: steps.calibre.outputs.markdown != ''
-        uses: peter-evans/create-pull-request@v3
-        with:
-          title: '🛠 压缩图片'
-          branch-suffix: timestamp
-          commit-message: '🛠 压缩图片'
-          body: ${{ steps.calibre.outputs.markdown }}
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+
+      - name: Compress images
+        run: |
+          find . -type f \( -iname \*.png -o -iname \*.jpg -o -iname \*.jpeg -o -iname \*.gif \) -exec convert "{}" -resize 50% "{}" \;
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add .
+          git commit -m "Compressed images"
+          git push
